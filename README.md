@@ -1,8 +1,10 @@
 # Reactor Netty
 
-[![Join the chat at https://gitter.im/reactor/reactor](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/reactor/reactor)
+[![Join the chat at https://gitter.im/reactor/reactor-netty](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/reactor/reactor-netty)
 
-[![Reactor Netty](https://img.shields.io/maven-central/v/io.projectreactor.netty/reactor-netty.svg?colorB=brightgreen)](https://mvnrepository.com/artifact/io.projectreactor.netty/reactor-netty) [ ![Download](https://api.bintray.com/packages/spring/jars/io.projectreactor.netty/images/download.svg) ](https://bintray.com/spring/jars/io.projectreactor.netty/_latestVersion)
+[![Reactor Netty](https://img.shields.io/maven-central/v/io.projectreactor.netty/reactor-netty.svg?colorB=brightgreen)](https://mvnrepository.com/artifact/io.projectreactor.netty/reactor-netty)
+
+[![publish](https://github.com/reactor/reactor-netty/actions/workflows/publish.yml/badge.svg)](https://github.com/reactor/reactor-netty/actions/workflows/publish.yml) [![CodeQL](https://github.com/reactor/reactor-netty/workflows/CodeQL/badge.svg?event=push)](https://github.com/reactor/reactor-netty/actions?query=workflow%3ACodeQL)
 
 `Reactor Netty` offers non-blocking and backpressure-ready `TCP`/`HTTP`/`UDP`
 clients & servers based on `Netty` framework.
@@ -20,17 +22,20 @@ With `Gradle` from [repo.spring.io](https://repo.spring.io) or `Maven Central` r
     }
 
     dependencies {
-      //compile "io.projectreactor.netty:reactor-netty:0.8.7.BUILD-SNAPSHOT"
-      compile "io.projectreactor.netty:reactor-netty:0.8.6.RELEASE"
+      //compile "io.projectreactor.netty:reactor-netty-core:1.0.12-SNAPSHOT"
+      compile "io.projectreactor.netty:reactor-netty-core:1.0.11"
+      //compile "io.projectreactor.netty:reactor-netty-http:1.0.12-SNAPSHOT"
+      compile "io.projectreactor.netty:reactor-netty-http:1.0.11"
     }
 ```
 
-See the [`Reactor Core` reference documentation](https://projectreactor.io/docs/core/release/reference/docs/index.html#getting)
+See the [Reference documentation](https://projectreactor.io/docs/netty/release/reference/index.html#getting)
 for more information on getting it (eg. using `Maven`, or on how to get milestones and snapshots).
 
 
 ## Getting Started
 New to `Reactor Netty`? Check this [Reactor Netty Workshop](https://violetagg.github.io/reactor-netty-workshop/)
+and the [Reference documentation](https://projectreactor.io/docs/netty/release/reference/index.html)
 
 Here is a very simple `HTTP` server and the corresponding `HTTP` client example
 
@@ -70,18 +75,20 @@ Having trouble with `Reactor Netty`? We'd like to help!
   for upgrade instructions and *new and noteworthy* features.
 * Ask a question - we monitor [stackoverflow.com](https://stackoverflow.com) for questions
   tagged with [`reactor-netty`](https://stackoverflow.com/questions/tagged/reactor-netty). You can also chat
-  with the community on [Gitter](https://gitter.im/reactor/reactor).
+  with the community on [Gitter](https://gitter.im/reactor/reactor-netty).
 * Report bugs with `Reactor Netty` at [github.com/reactor/reactor-netty/issues](https://github.com/reactor/reactor-netty/issues).
+* More about [Support and Deprecation policies](https://github.com/reactor/.github/blob/main/SUPPORT.adoc)
 
 ## Reporting Issues
 `Reactor Netty` uses `GitHub’s` integrated issue tracking system to record bugs and feature requests.
 If you want to raise an issue, please follow the recommendations below:
 * Before you log a bug, please [search the issue tracker](https://github.com/reactor/reactor-netty/search?type=Issues)
   to see if someone has already reported the problem.
-* If the issue doesn't already exist, [create a new issue](https://github.com/reactor/reactor-netty/issues/new).
+* If the issue doesn't already exist, [create a new issue](https://github.com/reactor/reactor-netty/issues/new/choose).
 * Please provide as much information as possible with the issue report, we like to know
   the version of `Reactor Netty` that you are using, as well as your `Operating System` and
   `JVM` version.
+* If you want to raise a security vulnerability, please review our [Security Policy](https://github.com/reactor/reactor-netty/security/policy) for more details.
 
 ## Building from Source
 You don't need to build from source to use `Reactor Netty` (binaries in
@@ -89,7 +96,7 @@ You don't need to build from source to use `Reactor Netty` (binaries in
 greatest, `Reactor Netty` can be easily built with the
 [gradle wrapper](https://docs.gradle.org/current/userguide/gradle_wrapper.html). You also need JDK 1.8.
 
-```
+```shell
 $ git clone https://github.com/reactor/reactor-netty.git
 $ cd reactor-netty
 $ ./gradlew build
@@ -97,17 +104,17 @@ $ ./gradlew build
 
 If you want to publish the artifacts to your local `Maven` repository use:
 
-```
-$ ./gradlew install
+```shell
+$ ./gradlew publishToMavenLocal
 ```
 
 ## Javadoc
 https://projectreactor.io/docs/netty/release/api/
 
 ## Guides
-https://violetagg.github.io/reactor-netty-workshop/
+
+* https://projectreactor.io/docs/netty/release/reference/index.html
+* https://violetagg.github.io/reactor-netty-workshop/
 
 ## License
 Reactor Netty is Open Source Software released under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
-
-_Sponsored by [Pivotal](https://pivotal.io)_

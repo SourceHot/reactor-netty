@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2011-2019 Pivotal Software Inc, All Rights Reserved.
+ * Copyright (c) 2011-2021 VMware, Inc. or its affiliates, All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       https://www.apache.org/licenses/LICENSE-2.0
+ *   https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,94 +13,163 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import org.gradle.util.VersionNumber
 
-task wrapper(type: Wrapper, description: "Create a Gradle self-download wrapper") {
-	group = 'Project Setup'
-	gradleVersion = "$gradleVersion"
+if (project.name == 'reactor-netty-examples') {
+	return
 }
 
-configure(rootProject) { subproject ->
-    apply from: "$gradleScriptDir/doc.gradle"
-	apply plugin: 'propdeps-maven'
-	apply plugin: 'maven'
+apply plugin: 'maven-publish'
+//we also conditionally apply artifactory and signing plugins below
 
-	install {
-		repositories.mavenInstaller {
-			customizePom(pom, subproject)
+task sourcesJar(type: Jar) {
+	archiveClassifier.set('sources')
+	from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar) {
+	archiveClassifier.set('javadoc')
+	from javadoc
+}
+
+static def qualifyVersion(String v) {
+	def versionNumber = VersionNumber.parse(v)
+
+	if (versionNumber == VersionNumber.UNKNOWN) return "BAD";
+
+	if (versionNumber.qualifier == null || versionNumber.qualifier.size() == 0) return "RELEASE" //new scheme
+	if (versionNumber.qualifier == "RELEASE") return "RELEASE" //old scheme
+	if (versionNumber.qualifier.matches("(?:M|RC)\\d+")) return "MILESTONE"
+	if (versionNumber.qualifier == "SNAPSHOT" || versionNumber.qualifier == "BUILD-SNAPSHOT") return "SNAPSHOT"
+
+	return "BAD"
+}
+
+task qualifyVersionGha() {
+	doLast {
+		def versionType = qualifyVersion("$version")
+
+		println "::set-output name=versionType::$versionType"
+		println "::set-output name=fullVersion::$version"
+		if (versionType == "BAD") {
+			println "::error ::Unable to parse $version to a VersionNumber with recognizable qualifier"
+			throw new TaskExecutionException(tasks.getByName("qualifyVersionGha"), new IllegalArgumentException("Unable to parse $version to a VersionNumber with recognizable qualifier"))
 		}
-	}
-
-	task sourcesJar(type: Jar) {
-		classifier = 'sources'
-		from sourceSets.main.allSource
-	}
-
-	task javadocJar(type: Jar) {
-		classifier = 'javadoc'
-		from javadoc
-	}
-
-	artifacts {
-		archives sourcesJar
-		archives javadocJar
-	  	archives docsZip
 	}
 }
 
-def customizePom(pom, gradleProject) {
-	pom.whenConfigured { generatedPom ->
-		// eliminate test-scoped dependencies (no need in maven central poms)
-		generatedPom.dependencies.removeAll { dep ->
-			dep.scope == "test"
+publishing {
+	repositories {
+		maven {
+			name = "mock"
+			url = "${rootProject.buildDir}/mockRepo"
 		}
-
-		// sort to make pom dependencies order consistent to ease comparison of older poms
-		generatedPom.dependencies = generatedPom.dependencies.sort { dep ->
-			"$dep.scope:$dep.groupId:$dep.artifactId"
-		}
-
-		// add all items necessary for maven central publication
-		generatedPom.project {
-			name = gradleProject.description
-			description = gradleProject.description
-			url = 'https://github.com/reactor/reactor-netty'
-			organization {
-				name = 'reactor'
-				url = 'https://github.com/reactor'
-			}
-			licenses {
-				license {
-					name 'The Apache Software License, Version 2.0'
-					url 'https://www.apache.org/licenses/LICENSE-2.0.txt'
-					distribution 'repo'
+		if (qualifyVersion("$version") == "RELEASE") {
+			maven {
+				name = "sonatype"
+				url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2"
+				credentials {
+					username findProperty("sonatypeUsername")
+					password findProperty("sonatypePassword")
 				}
 			}
-			scm {
+		}
+	}
+
+	publications {
+		mavenJava(MavenPublication) {
+			from components.java
+			artifact sourcesJar
+			artifact javadocJar
+
+			//consider adding extra artifacts here, conditionally on submodule's name and perhaps in an afterEvaluate block
+
+			pom {
+				afterEvaluate {
+					name = project.description
+					description = project.description
+				}
+				packaging = 'jar' //if not explicitly set, end up as `pom` in output. omitted in output if set as `jar`...
+
 				url = 'https://github.com/reactor/reactor-netty'
-				connection = 'scm:git:git://github.com/reactor/reactor-netty'
-				developerConnection = 'scm:git:git://github.com/reactor/reactor-netty'
-			}
-			developers {
-				developer {
-					id = 'smaldini'
-					name = 'Stephane Maldini'
-					email = 'smaldini@pivotal.io'
+				organization {
+					name = 'reactor'
+					url = 'https://github.com/reactor'
 				}
-				developer {
-				  id = 'simonbasle'
-				  name = 'Simon Baslé'
-				  email = 'sbasle@pivotal.io'
+				licenses {
+					license {
+						name = 'The Apache Software License, Version 2.0'
+						url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+						distribution = 'repo'
+					}
 				}
-				developer {
-				  id = 'violetagg'
-				  name = 'Violeta Georgieva'
-				  email = 'vgeorgieva@pivotal.io'
+				scm {
+					url = 'https://github.com/reactor/reactor-netty'
+					connection = 'scm:git:git://github.com/reactor/reactor-netty'
+					developerConnection = 'scm:git:git://github.com/reactor/reactor-netty'
+				}
+				developers {
+					developer {
+						id = 'simonbasle'
+						name = 'Simon Baslé'
+						email = 'sbasle@vmware.com'
+					}
+					developer {
+						id = 'violetagg'
+						name = 'Violeta Georgieva'
+						email = 'violetag@vmware.com'
+					}
+				}
+				issueManagement {
+					system = "GitHub Issues"
+					url = "https://github.com/reactor/reactor-netty/issues"
+				}
+
+				withXml {
+					//set optional true for compileOnly dependencies, which are not in there by default
+					asNode().dependencies[0].each { node ->
+						def group = node.groupId.text()
+						def artifact = node.artifactId.text()
+						def version = node.version.text()
+						def isOptional = project.configurations.optional.allDependencies.any { dep -> dep.group == group && dep.name == artifact }
+						if (isOptional) {
+							node.appendNode('optional', true)
+							println "$group:$artifact:$version has been marked as optional in generated pom"
+						}
+					}
+					//groovy magic incantation to sort dependencies alphabetically (scope/group/name..)
+					def sorted = asNode().dependencies[0].children().collect().sort { it.scope.text() + it.groupId.text() + it.artifactId.text() }
+					asNode().dependencies[0].children().with { deps ->
+						deps.clear()
+						sorted.each { deps.add(it) }
+					}
 				}
 			}
-			issueManagement {
-				system = "GitHub Issues"
-				url = "https://github.com/reactor/reactor-netty/issues"
-			}
+		}
+	}
+}
+
+if (rootProject.hasProperty("artifactory_publish_password")) {
+	apply plugin: "com.jfrog.artifactory"
+
+	artifactoryPublish {
+		publications(publishing.publications.mavenJava)
+	}
+}
+
+if (qualifyVersion("$version") in ["RELEASE", "MILESTONE"] || rootProject.hasProperty("forceSigning")) {
+	apply plugin: 'signing'
+
+	signing {
+		//requiring signature if there is a publish task that is not to MavenLocal
+		required { gradle.taskGraph.allTasks.any { it.name.toLowerCase().contains("publish") && !it.name.contains("MavenLocal") } }
+		def signingKey = findProperty("signingKey")
+		def signingPassword = findProperty("signingPassword")
+
+		useInMemoryPgpKeys(signingKey, signingPassword)
+
+		afterEvaluate {
+			sign publishing.publications.mavenJava
 		}
 	}
 }

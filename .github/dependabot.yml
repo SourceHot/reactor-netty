@@ -1,0 +1,23 @@
+version: 2
+updates:
+- package-ecosystem: gradle
+  directory: "/"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+  assignees:
+  - violetagg
+  labels:
+  - type/dependency-upgrade
+  ignore:
+  - dependency-name: io.micrometer:micrometer-core
+    versions:
+    - "> 1.5.0"
+  - dependency-name: org.apache.tomcat.embed:tomcat-embed-core
+    versions:
+    - ">= 10.0.a"
+  - dependency-name: com.github.johnrengelman.shadow:com.github.johnrengelman.shadow.gradle.plugin
+    versions:
+    # This version of Shadow supports Gradle 7.0+ only.
+    - ">= 7.a"
+  rebase-strategy: disabled
